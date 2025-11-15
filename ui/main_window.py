@@ -246,34 +246,18 @@ class MainWindow(QMainWindow):
     def on_run_clicked(self):
         task = self._get_selected_task()
         if not task:
-            QMessageBox.warning(self, "Aucune sélection",
-                                "Sélectionne une tâche.")
+            self.log.warning("Tentative d'exécuter une tâche sans sélection")
             return
 
-        # Lancement manuel → blocant pour l'instant (simple).
-        # Plus tard : on pourra le lancer dans un thread (TaskWorker).
-        reply = QMessageBox.question(
-            self,
-            "Exécution manuelle",
-            f"Exécuter maintenant la tâche '{task.name}' ?",
-        )
-
-        if reply != QMessageBox.Yes:
-            return
+        # EXÉCUTION DIRECTE (sans popup)
+        self.log.info(f"[MANUEL] Début exécution de la tâche : {task.name}")
 
         try:
-            self.log.info(f"Exécution manuelle de la tâche : {task.name}")
             self.engine.run_task(task)
-            QMessageBox.information(
-                self,
-                "Exécution terminée",
-                f"La tâche '{task.name}' s'est terminée avec succès.",
-            )
+            self.log.info(f"[MANUEL] Tâche '{task.name}' exécutée avec succès")
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Erreur d'exécution",
-                f"Erreur lors de l'exécution de la tâche '{task.name}' :\n{e}",
+            self.log.error(
+                f"[MANUEL] Erreur lors de l'exécution de '{task.name}' : {e}"
             )
 
     @Slot()
