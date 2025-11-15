@@ -1,0 +1,76 @@
+# ===============================
+#  PYTHON / PYCHARM / VS CODE
+# ===============================
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Editor settings
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Mypy / Pyright
+.mypy_cache/
+.pyright/
+
+# ===============================
+#  PROJECT-SPECIFIC
+# ===============================
+
+# Local ETL database + logs
+*.db
+*.sqlite
+*.sqlite3
+logs/
+**/logs/
+
+# Windows junk
+Thumbs.db
+Desktop.ini
+
+# macOS junk
+.DS_Store
+
+# PyInstaller / executable builds
+*.spec
+
+# Qt / PySide6 build cache
+*.qmlc
+*.jsc
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# CSV or temp exports (if produced by your ETL)
+exports/
+output/
+*.csv
+*.xlsx
+*.json
+
+# Credentials
+config/secrets*.json
+*.key
+*.pem

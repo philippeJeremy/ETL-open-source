@@ -1,0 +1,72 @@
+etl_app/
+├── main.py                         # Point d'entrée : lance l'application PySide6
+│
+├── core/                           # Moteur ETL (logique pure, sans interface)
+│   ├── __init__.py
+│   ├── models.py                   # Tâche, Step, Types de Steps, Connexions
+│   ├── engine.py                   # Orchestrateur qui exécute les steps
+│   ├── utils.py                    
+|   |
+│   ├── extractors/                 # Tout ce qui touche l'extraction
+│   │   ├── __init__.py
+│   │   ├── base.py                 # BaseExtractor (classe abstraite)
+│   │   ├── postgres.py
+│   │   ├── mysql.py
+│   │   ├── sqlserver.py
+│   │   ├── oracle.py
+│   │   ├── mongo.py
+│   │   ├── csv.py
+│   │   └── … (d’autres extracteurs)
+│   │
+│   ├── transformers/               # Étapes de transformation
+│   │   ├── __init__.py
+│   │   ├── base.py                 # BaseTransformer (abstrait)
+│   │   ├── pandas_transformer.py   # Filtre, map, merge… pandas
+│   │   ├── sql_transformer.py      # Transformations SQL
+│   │   └── custom_transformer.py
+│   │
+│   └── loaders/                    # Injection dans les destinations
+│       ├── __init__.py
+│       ├── base.py                 # BaseLoader
+│       ├── postgres.py
+│       ├── mysql.py
+│       ├── sqlserver.py
+│       ├── oracle.py
+│       ├── csv.py
+│       └── … (autres loaders)
+│
+├── scheduler/                      # Moteur de planification
+│   ├── __init__.py
+│   ├── scheduler.py                # Gestion des tâches récurrentes (thread + cron-like)
+│   ├── cron_parser.py              # Convertit "Toutes les heures" → règles
+│   └── worker.py                   # Thread qui surveille et exécute les tâches
+│
+├── storage/                        # Persistance interne (JSON / SQLite)
+│   ├── __init__.py
+│   ├── json_storage.py             # Sauvegarde en JSON
+│   ├── sqlite_storage.py           # Sauvegarde en SQLite
+│   └── repository.py               # API unifiée accès tâches + connexions
+│
+├── ui/                             # Interface graphique PySide6
+│   ├── __init__.py
+│   ├── main_window.py              # Menu principal (liste des tâches)
+│   ├── task_editor.py              # Edition d’une tâche (nom + récurrence)
+│   ├── step_editor.py              # Edition d’un step (extract/transform/load)
+│   ├── connection_manager.py       # Interface de gestion des connexions
+│   ├── log_viewer.py               # Affichage des logs
+│   ├── run_console.py              # Console d'exécution en direct
+│   └── styles.qss                  # Thème graphique
+│
+├── services/                       # Services transversaux
+│   ├── __init__.py
+│   ├── log_service.py              # Logging vers fichiers + GUI
+│   ├── connection_service.py       # Vérification test de connexion
+│   ├── mapping_service.py          # Gestion des mappings de champs
+│   └── validation_service.py       # Validation de steps et pipelines
+│
+├── resources/
+│   ├── icons/                      # Icônes PNG/SVG
+│   └── templates/                  # Templates SQL, CSV…
+│
+├── requirements.txt                # dépendances Python
+└── README.md                       # Documentation
