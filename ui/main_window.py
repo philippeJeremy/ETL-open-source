@@ -1,22 +1,16 @@
 # ui/main_window.py
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional, List
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, Slot, QTimer
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QPushButton,
-    QLabel,
-    QMessageBox,
-    QStatusBar,
-    QAbstractItemView,
-    QDialog,
+    QMainWindow, QTabWidget, QWidget,
+    QVBoxLayout, QHBoxLayout, QTableWidget,
+    QTableWidgetItem, QPushButton, QLabel,
+    QMessageBox, QPlainTextEdit, QAbstractItemView,
+    QDialog, QFileDialog  
 )
 
 from services.log_service import get_logger
@@ -50,7 +44,7 @@ class MainWindow(QMainWindow):
         self.scheduler = scheduler
 
         self.log = get_logger("MainWindow")
-
+        
         self.tasks: List[ScheduledTask] = []
 
         self.setWindowTitle("Multi-DB ETL Planner")
@@ -66,11 +60,21 @@ class MainWindow(QMainWindow):
         central = QWidget(self)
         main_layout = QVBoxLayout(central)
 
+        # ---- TABWIDGET ----
+        self.tabs = QTabWidget()
+        main_layout.addWidget(self.tabs)
+
+        # ----------------------------------------------------
+        #  ONGLET : TÂCHES
+        # ----------------------------------------------------
+        self.tab_tasks = QWidget()
+        tasks_layout = QVBoxLayout(self.tab_tasks)
+
         # Titre
         title = QLabel("Tâches ETL planifiées")
         title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         title.setStyleSheet("font-size: 20px; font-weight: bold;")
-        main_layout.addWidget(title)
+        tasks_layout.addWidget(title)
 
         # Tableau des tâches
         self.table = QTableWidget()
@@ -82,10 +86,9 @@ class MainWindow(QMainWindow):
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.horizontalHeader().setStretchLastSection(True)
+        tasks_layout.addWidget(self.table)
 
-        main_layout.addWidget(self.table)
-
-        # Boutons d'action
+        # Boutons
         btn_layout = QHBoxLayout()
 
         self.btn_refresh = QPushButton("Rafraîchir")
@@ -104,22 +107,68 @@ class MainWindow(QMainWindow):
         btn_layout.addWidget(self.btn_run)
         btn_layout.addWidget(self.btn_connections)
 
-        main_layout.addLayout(btn_layout)
+        tasks_layout.addLayout(btn_layout)
+
+        # Ajouter l'onglet
+        self.tabs.addTab(self.tab_tasks, "Tâches")
+
+        # ----------------------------------------------------
+        #  ONGLET : LOGS (ajouté vide pour l'instant)
+        # ----------------------------------------------------
+        self.tab_logs = QWidget()
+        self.logs_layout = QVBoxLayout(self.tab_logs)
+
+        # Zone de texte du log viewer
+        self.log_view = QPlainTextEdit()
+        self.log_view.setReadOnly(True)
+        self.logs_layout.addWidget(self.log_view)
+
+        # Boutons logs
+        log_btn_layout = QHBoxLayout()
+        self.btn_refresh_logs = QPushButton("Rafraîchir")
+        self.btn_clear_logs = QPushButton("Effacer affichage")
+        self.btn_open_log = QPushButton("Ouvrir fichier log")
+
+        log_btn_layout.addWidget(self.btn_refresh_logs)
+        log_btn_layout.addWidget(self.btn_clear_logs)
+        log_btn_layout.addWidget(self.btn_open_log)
+        log_btn_layout.addStretch()
+
+        self.logs_layout.addLayout(log_btn_layout)
+
+        self.tabs.addTab(self.tab_logs, "Logs")
+
+        # ----------------------------------------------------
+        # CONNECT SIGNALS
+        # ----------------------------------------------------
         self.btn_connections.clicked.connect(self.on_connections_clicked)
-        self.setCentralWidget(central)
-
-        # Barre de statut
-        status = QStatusBar()
-        self.setStatusBar(status)
-        self.status_bar = status
-
-        # Connexion des signaux
         self.btn_refresh.clicked.connect(self.on_refresh_clicked)
         self.btn_new.clicked.connect(self.on_new_clicked)
         self.btn_edit.clicked.connect(self.on_edit_clicked)
         self.btn_delete.clicked.connect(self.on_delete_clicked)
         self.btn_toggle.clicked.connect(self.on_toggle_clicked)
         self.btn_run.clicked.connect(self.on_run_clicked)
+
+        self.btn_refresh_logs.clicked.connect(self.load_log_file)
+        self.btn_clear_logs.clicked.connect(lambda: self.log_view.clear())
+        self.btn_open_log.clicked.connect(self.open_log_file)
+
+        # ----------------------------------------------------
+        # Finalisation
+        # ----------------------------------------------------
+        self.setCentralWidget(central)
+        
+        # ----------------------------------------------------
+        # Barre de statut
+        # ----------------------------------------------------
+        self.status_bar = self.statusBar()
+        self.status_bar.showMessage("Prêt.")
+
+        # Auto refresh logs toutes les 3s
+        self.log_file_path = str(Path.home() / ".etl_multi_db" / "logs" / "etl_app_log")
+        self.log_timer = QTimer()
+        self.log_timer.timeout.connect(self.load_log_file)
+        self.log_timer.start(3000)
 
     # ------------------------------------------------------------------
     # Chargement / affichage des tâches
@@ -129,6 +178,36 @@ class MainWindow(QMainWindow):
         self.tasks = self.repository.list_tasks(include_steps=True)
         self._refresh_table()
         self.status_bar.showMessage(f"{len(self.tasks)} tâche(s) chargée(s).")
+        
+    def load_log_file(self):
+        try:
+            # Essayer UTF-8
+            try:
+                with open(self.log_file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                # Fallback CP1252 (Windows)
+                with open(self.log_file_path, "r", encoding="cp1252", errors="replace") as f:
+                    content = f.read()
+
+            if self.log_view.toPlainText() != content:
+                self.log_view.setPlainText(content)
+                self.log_view.verticalScrollBar().setValue(
+                    self.log_view.verticalScrollBar().maximum()
+                )
+        except Exception as e:
+            self.log.error(f"Erreur lecture log : {e}")
+        
+    def open_log_file(self):
+        try:
+            QFileDialog.getOpenFileName(
+                self,
+                "Ouvrir log",
+                self.log_file_path,
+                "Log (*.log *.txt)"
+            )
+        except Exception as e:
+            self.log.error(f"Erreur ouverture fichier log : {e}")
 
     def _refresh_table(self):
         self.table.setRowCount(len(self.tasks))
