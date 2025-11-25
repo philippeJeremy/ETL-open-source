@@ -13,19 +13,15 @@ from services.log_service import init_logging, get_logger
 def main():
     # Application Qt
     app = QApplication(sys.argv)
-    app.setApplicationName("Multi-DB ETL planner")
+    app.setApplicationName("Multi-DB ETL Planner")
 
     # Répertoire de travail
     base_dir = Path.home() / ".etl_multi_db"
-    base_dir.mkdir(parents=True, exist_ok=True)
-
-    # logs
     logs_dir = base_dir / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    # IMPORTANT : initialiser le logging
+    # Initialisation logs
     init_logging(logs_dir)
-
     log = get_logger("Main")
     log.info("Application ETL démarrée")
 
@@ -50,9 +46,8 @@ def main():
     # boucle Qt
     exit_code = app.exec()
 
-    # Arrêt propre du scheduler
+    # Arrêt propre
     scheduler.stop()
-
     sys.exit(exit_code)
 
 

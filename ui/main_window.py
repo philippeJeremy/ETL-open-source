@@ -22,6 +22,7 @@ from ui.connection_manager import ConnectionManagerDialog
 from ui.task_editor import TaskEditorDialog
 
 
+
 class MainWindow(QMainWindow):
     """
     Fenêtre principale de l'application ETL.
@@ -113,12 +114,12 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.tab_tasks, "Tâches")
 
         # ----------------------------------------------------
-        #  ONGLET : LOGS (ajouté vide pour l'instant)
+        #  ONGLET : LOGS
         # ----------------------------------------------------
         self.tab_logs = QWidget()
         self.logs_layout = QVBoxLayout(self.tab_logs)
 
-        # Zone de texte du log viewer
+        # Zone texte
         self.log_view = QPlainTextEdit()
         self.log_view.setReadOnly(True)
         self.logs_layout.addWidget(self.log_view)
@@ -163,6 +164,17 @@ class MainWindow(QMainWindow):
         # ----------------------------------------------------
         self.status_bar = self.statusBar()
         self.status_bar.showMessage("Prêt.")
+        
+        # # ---------------------------------------------
+        # # ONGLET : Visualisation 3D
+        # # ---------------------------------------------
+        # self.tab_3d = QWidget()
+        # tab3d_layout = QVBoxLayout(self.tab_3d)
+
+        # self.db3d_view = Db3DView(self.repository, self)
+        # tab3d_layout.addWidget(self.db3d_view)
+
+        # self.tabs.addTab(self.tab_3d, "Visualisation 3D")
 
         # Auto refresh logs toutes les 3s
         self.log_file_path = str(Path.home() / ".etl_multi_db" / "logs" / "etl_app_log")
@@ -342,4 +354,11 @@ class MainWindow(QMainWindow):
     @Slot()
     def on_connections_clicked(self):
         dialog = ConnectionManagerDialog(self.repository, self)
+        dialog.exec()
+    
+    @Slot()
+    def on_db3d_clicked(self):
+        from ui.db_3d_view import Db3DSelectorDialog
+
+        dialog = Db3DSelectorDialog(self.repository, parent=self)
         dialog.exec()
